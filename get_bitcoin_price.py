@@ -7,6 +7,7 @@ def getPrices():
     for page in range(1,1000):
         page_string = str(page)
         page_link = 'https://api.coinbase.com/v1/prices/historical?page=' + page_string
+        print("Downloading: " + page_link)
         r = requests.get(page_link)
         r = r.text
         year_string = r[0:4]
@@ -88,3 +89,4 @@ for key in price_dict.keys():
     stamp = year+month+date
     value = price_dict[key]
     target.write(str(stamp)+','+str(value)+'\n')
+    target.flush()

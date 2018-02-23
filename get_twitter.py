@@ -10,11 +10,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import datetime
-
+import urllib3
 
 #Format
 #{"importance": 0-10, "sentiment": positive/negative/neutral, "score":0-1}
 #
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 def get_sentiment(year, month, day):
     month_string = str(month)
@@ -25,16 +28,24 @@ def get_sentiment(year, month, day):
         day_string = "0" + day_string
     date = str(year) + month_string + day_string
 
-    r1 = requests.get("http://archive.org/wayback/available?url=reddit.com/r/bitcoin&timestamp=" + date)
+    r1 = requests.get("http://archive.org/wayback/available?url=reddit.com/r/bitcoin&timestamp=" + date, verify=False)
 
     if(r1.status_code == 200):
         data1 = json.loads(r1.text)
-        archive_url = data1['archived_snapshots']['closest']['url']
+        
+        hasClosest = hasattr(data1['archived_snapshots'],'closest')
+        hasUrl = hasattr(data1['archived_snapshots']['closest'],'url')
+        
+        if(hasattr(data1['archived_snapshots'],'closest')):
+            archive_url  = None
+        else:
+            archive_url = data1['archived_snapshots']['closest']['url']
     else:
         archive_url = None
         print("Error return code = "+str(r1.status_code))
 
-    r2 = requests.get("https://api.idolondemand.com/1/api/sync/analyzesentiment/v1?apikey=fe6dea49-084f-4cd8-be86-0976baf9a714&url=" + archive_url)
+    fullUrl = "https://api.idolondemand.com/1/api/sync/analyzesentiment/v1?apikey=fe6dea49-084f-4cd8-be86-0976baf9a714&url=" + archive_url
+    r2 = requests.get(fullUrl, verify=False)
 
     if(r2.status_code == 200):
         data2 = json.loads(r2.text)
@@ -45,17 +56,17 @@ def get_sentiment(year, month, day):
 
 def make_dict():
     scores = {}
-    date = datetime.date(2017, 11, 14)
+    #date = datetime.date(2018, 1, 24)
+    date = datetime.date.today()
     target = open('sentiment6.txt', 'w')
-    for i in range(643):
-        #print(date.year)
-        #print(date.month)
-        #print(date.day)
+    for i in range(1000):
+        print(str(date.day) + "." + str(date.month) + "." + str(date.year))
         stamp = date.year*10000+date.month*100+date.day
         value = get_sentiment(date.year, date.month, date.day)
         scores[(date.year, date.month, date.day)] = value
         date -= datetime.timedelta(days=1)
         target.write(str(stamp)+','+str(value))
         target.write('\n')
+        target.flush()
     target.close()
 make_dict()
