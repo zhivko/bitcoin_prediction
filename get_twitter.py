@@ -56,9 +56,9 @@ def get_sentiment(year, month, day):
 
 def make_dict():
     scores = {}
-    #date = datetime.date(2018, 1, 24)
-    date = datetime.date.today()
-    target = open('sentiment6.txt', 'w')
+    date = datetime.date(2016, 11, 27)
+    #date = datetime.date.today()
+    target = open('sentiment6.txt', 'a')
     for i in range(1000):
         print(str(date.day) + "." + str(date.month) + "." + str(date.year))
         stamp = date.year*10000+date.month*100+date.day
